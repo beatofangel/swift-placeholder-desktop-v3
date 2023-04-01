@@ -2,6 +2,7 @@
 import vue from '@vitejs/plugin-vue'
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import electron from "vite-plugin-electron"
+import vueJsx from "@vitejs/plugin-vue-jsx";
 
 // Utilities
 import { defineConfig } from 'vite'
@@ -14,6 +15,7 @@ export default defineConfig({
     vue({ 
       template: { transformAssetUrls }
     }),
+    vueJsx({}),
     // https://github.com/vuetifyjs/vuetify-loader/tree/next/packages/vite-plugin
     vuetify({
       autoImport: true,
@@ -33,7 +35,14 @@ export default defineConfig({
         }
       },
       {
-        entry: 'electron/preload.ts'
+        entry: 'electron/preload.ts',
+        vite: {
+          build: {
+            rollupOptions: {
+              external: ['@vscode/sqlite3', 'sequelize']
+            }
+          }
+        }
       }
     ]),
   ],

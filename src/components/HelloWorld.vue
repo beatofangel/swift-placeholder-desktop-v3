@@ -13,6 +13,8 @@
 
       <div class="py-14" />
 
+      <v-cascade-select :items="items"></v-cascade-select>
+
       <v-row class="d-flex align-center justify-center">
         <v-col cols="auto">
           <v-btn
@@ -75,5 +77,20 @@
 </template>
 
 <script lang="ts" setup>
+import { VCascadeSelect } from './VCascadeSelect';
+const items = [
+  {
+    title: 'Item #1',
+    value: 1,
+  },
+  {
+    title: 'Item #2',
+    value: 2,
+  },
+  {
+    title: 'Item #3',
+    value: 3,
+  },
+]
   //
 </script>
