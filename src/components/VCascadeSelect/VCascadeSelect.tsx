@@ -1,4 +1,4 @@
-import { computed, mergeProps, ref } from 'vue'
+import { computed, mergeProps, ref, withDirectives } from 'vue'
 // @ts-ignore
 import { deepEqual, genericComponent, omit, propsFactory, useRender, wrapInArray } from 'vuetify/lib/util/index.mjs'
 
@@ -31,6 +31,10 @@ import { VMenu } from 'vuetify/lib/components/VMenu/index'
 import { VTextField } from 'vuetify/lib/components/VTextField/index'
 import { VCheckboxBtn } from 'vuetify/lib/components/VCheckbox/index'
 import { VDefaultsProvider } from 'vuetify/lib/components/VDefaultsProvider/index'
+import { VCard, VCardText } from 'vuetify/lib/components/VCard/index'
+import { VRow, VCol } from 'vuetify/lib/components/VGrid/index'
+import { VBtn } from 'vuetify/lib/components/VBtn/index'
+import { VIcon } from 'vuetify/lib/components/VIcon/index'
 // import VCascadeSelectList from "./VCascadeSelectList"; // Extensions
 
 // @ts-ignore
@@ -42,6 +46,15 @@ import type { VFieldSlots } from 'vuetify/lib/components/VField/VField.mjs'
 // @ts-ignore
 import type { InternalItem } from 'vuetify/lib/composables/items.mjs'
 import type { PropType } from 'vue'
+
+export const defaultMenuProps = {
+  closeOnClick: false,
+  closeOnContentClick: false,
+  disableKeys: true,
+  openOnClick: false,
+  maxHeight: 296, //304,
+  listHeaderMaxHeight: 24,
+}
 
 export const makeSelectProps = propsFactory({
   chips: Boolean,
@@ -226,6 +239,124 @@ export const VCascadeSelect = genericComponent<new <
       const hasChips = !!(props.chips || slots.chip)
       const hasList = !!((!props.hideNoData || displayItems.value.length) || slots.prepend || slots.append || slots['no-data'])
       const [textFieldProps] = VTextField.filterProps(props)
+      const cardList: JSX.Element[] = []
+      const depth = 3
+      const colPattern = (depth: number) => {
+        return depth == 1 ? 12 : depth == 2 ? 6 : 4
+      }
+      for (let i = 0; i< depth; i++) {
+        cardList.push(
+          <VCol cols={ colPattern(depth) }>
+            <VCard
+              style={[{ 'display': 'flex' }, { 'flex-direction': 'column' }]}
+              class={[ 'py-1', 'mx-1' ]}
+              maxHeight={ defaultMenuProps.maxHeight }
+              flat
+              rounded='0'
+            >
+              <VRow
+                style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }, { background: 'red' }]}
+                class={[ 'ma-0' ]}
+                noGutters
+              >
+                <VCol
+                  class={[ 'pa-0', 'd-flex', 'justify-start' ]}
+                  cols='4'
+                ></VCol>
+                <VCol
+                  class={[ 'pa-0', 'd-flex', 'justify-center' ]}
+                  cols='4'
+                >
+                  <VBtn
+                    style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
+                    variant='text'
+                  >
+                    <VIcon
+                      class={[ 'no-bg-color-icon' ]}
+                    >mdi-chevron-up</VIcon>
+                  </VBtn>
+                </VCol>
+                <VCol
+                  class={[ 'pa-0', 'd-flex', 'justify-end' ]}
+                  cols='4'
+                ></VCol>
+              </VRow>
+              <VCardText
+                class={[ 'pa-0', 'auto-hide-scrollbar', 'overflow-y-auto', 'flex-grow-1' ]}
+              >
+                <VList
+                  ref={ listRef }
+                  selected={ selected.value }
+                  selectStrategy={ props.multiple ? 'independent' : 'single-independent' }
+                  density='compact'
+                  // @ts-ignore
+                  onMousedown={ (e: MouseEvent) => e.preventDefault() }
+                  onFocusout={ onFocusout }
+                >
+                  { !displayItems.value.length && !props.hideNoData && (slots['no-data']?.() ?? (
+                    <VListItem title={ t(props.noDataText) } />
+                  ))}
+
+                  { slots['prepend-item']?.() }
+
+                  { displayItems.value.map((item: any, index: any) => {
+                    if (slots.item) {
+                      return slots.item?.({
+                        item,
+                        index,
+                        props: mergeProps(item.props, { onClick: () => select(item) }),
+                      })
+                    }
+
+                    return (
+                      <VListItem
+                        key={ index }
+                        { ...item.props }
+                        onClick={ () => select(item) }
+                      >
+                        {{
+                          prepend: ({ isSelected }) => props.multiple && !props.hideSelected ? (
+                            <VCheckboxBtn modelValue={ isSelected } ripple={ false } />
+                          ) : undefined,
+                        }}
+                      </VListItem>
+                    )
+                  })}
+
+                  { slots['append-item']?.() }
+                </VList>
+              </VCardText>
+              <VRow
+                style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }, { background: 'red' }]}
+                class={[ 'ma-0' ]}
+                noGutters
+              >
+                <VCol
+                  class={[ 'pa-0', 'd-flex', 'justify-start' ]}
+                  cols='4'
+                ></VCol>
+                <VCol
+                  class={[ 'pa-0', 'd-flex', 'justify-center' ]}
+                  cols='4'
+                >
+                  <VBtn
+                    style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
+                    variant='text'
+                  >
+                    <VIcon
+                      class={[ 'no-bg-color-icon' ]}
+                    >mdi-chevron-down</VIcon>
+                  </VBtn>
+                </VCol>
+                <VCol
+                  class={[ 'pa-0', 'd-flex', 'justify-end' ]}
+                  cols='4'
+                ></VCol>
+              </VRow>
+            </VCard>
+          </VCol>
+        )
+      }
 
       return (
         <VTextField
@@ -269,46 +400,19 @@ export const VCascadeSelect = genericComponent<new <
                   { ...props.menuProps }
                 >
                   { hasList && (
-                    <VList
-                      ref={ listRef }
-                      selected={ selected.value }
-                      selectStrategy={ props.multiple ? 'independent' : 'single-independent' }
-                      // @ts-ignore
-                      onMousedown={ (e: MouseEvent) => e.preventDefault() }
-                      onFocusout={ onFocusout }
+                    <VCard
+                      maxHeight={ defaultMenuProps.maxHeight }
+                      variant='flat'
                     >
-                      { !displayItems.value.length && !props.hideNoData && (slots['no-data']?.() ?? (
-                        <VListItem title={ t(props.noDataText) } />
-                      ))}
-
-                      { slots['prepend-item']?.() }
-
-                      { displayItems.value.map((item: any, index: any) => {
-                        if (slots.item) {
-                          return slots.item?.({
-                            item,
-                            index,
-                            props: mergeProps(item.props, { onClick: () => select(item) }),
-                          })
-                        }
-
-                        return (
-                          <VListItem
-                            key={ index }
-                            { ...item.props }
-                            onClick={ () => select(item) }
-                          >
-                            {{
-                              prepend: ({ isSelected }) => props.multiple && !props.hideSelected ? (
-                                <VCheckboxBtn modelValue={ isSelected } ripple={ false } />
-                              ) : undefined,
-                            }}
-                          </VListItem>
-                        )
-                      })}
-
-                      { slots['append-item']?.() }
-                    </VList>
+                      <VCardText
+                        class={[ 'd-flex', 'flex-nowrap', 'py-0', 'pl-0', 'pr-5' ]}
+                        style={[{ background: 'green' }]}
+                      >
+                        <VRow noGutters>
+                          { ...cardList }
+                        </VRow>
+                      </VCardText>
+                    </VCard>
                   )}
                 </VMenu>
 

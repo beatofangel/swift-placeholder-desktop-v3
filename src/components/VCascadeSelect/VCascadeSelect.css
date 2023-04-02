@@ -15,7 +15,7 @@
   -webkit-mask-position: left top;
 }
 
-.noBgColorIcon::after {
+.no-bg-color-icon::after {
   background-color: transparent !important;
 }
 
