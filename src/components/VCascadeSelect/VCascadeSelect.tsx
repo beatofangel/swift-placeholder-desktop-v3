@@ -1,4 +1,4 @@
-import { computed, mergeProps, ref, withDirectives } from 'vue'
+import { computed, withDirectives, mergeProps, ref } from 'vue'
 // @ts-ignore
 import { deepEqual, genericComponent, omit, propsFactory, useRender, wrapInArray } from 'vuetify/lib/util/index.mjs'
 
@@ -22,6 +22,14 @@ import "vuetify/lib/components/VTextField/VTextField.sass"
 import "vuetify/lib/components/VSelect/VSelect.sass" // Components
 import "./VCascadeSelect.css"
 
+// Directives
+// @ts-ignore
+import { Scroll } from 'vuetify/lib/directives/scroll/index.mjs'
+
+// Service
+// @ts-ignore
+import goTo from 'vuetify/lib/services/goto/index.mjs'
+
 // @ts-ignore
 import { makeVTextFieldProps } from 'vuetify/lib/components/VTextField/VTextField.mjs'
 import { VDialogTransition } from 'vuetify/lib/components/transitions/index'
@@ -44,8 +52,19 @@ import type { VInputSlots } from 'vuetify/lib/components/VInput/VInput.mjs'
 // @ts-ignore
 import type { VFieldSlots } from 'vuetify/lib/components/VField/VField.mjs'
 // @ts-ignore
-import type { InternalItem } from 'vuetify/lib/composables/items.mjs'
+// import type { InternalItem } from 'vuetify/lib/composables/items.mjs'
 import type { PropType } from 'vue'
+interface InternalItem<T = any> {
+  title: string
+  value: any
+  props: {
+    [key: string]: any
+    title: string
+    value: any
+  }
+  children?: InternalItem<T>[]
+  raw: T
+}
 
 export const defaultMenuProps = {
   closeOnClick: false,
@@ -69,6 +88,7 @@ export const makeSelectProps = propsFactory({
   },
   menuProps: {
     type: Object as PropType<VMenu['$props']>,
+    // default: () => defaultMenuProps,
   },
   multiple: Boolean, // TODO disabled
   noDataText: {
@@ -80,8 +100,16 @@ export const makeSelectProps = propsFactory({
     type: Function as PropType<typeof deepEqual>,
     default: deepEqual,
   },
-
-  ...makeItemsProps({ itemChildren: false }),
+  colors: {
+    type: Array<String>,
+    default: ["primary", "light-green", "orange", "pink", "cyan", "blue-grey"],
+  },
+  scrollOffset: {
+    type: [ Number, String ],
+    default: 0
+  },
+  // ...makeItemsProps({ itemChildren: false }),
+  ...makeItemsProps(),
 }, 'v-cascade-select')
 
 type Primitive = string | number | boolean | symbol
@@ -154,19 +182,100 @@ export const VCascadeSelect = genericComponent<new <
       }
     )
     const form = useForm()
-    const selections = computed(() => {
-      return model.value.map((v: any) => {
-        return items.value.find((item: { value: any }) => props.valueComparator(item.value, v.value)) || v
-      })
-    })
-    const selected = computed(() => selections.value.map((selection: { props: { value: any } }) => selection.props.value))
+    // TODO 需要修改选中项
+    // const selections = computed(() => {
+    //   return model.value.map((v: any) => {
+    //     return items.value.find((item: { value: any }) => props.valueComparator(item.value, v.value)) || v
+    //   })
+    // })
+    // const selected = computed(() => selections.value.map((selection: { props: { value: any } }) => selection.props.value))
 
-    const displayItems = computed(() => {
-      if (props.hideSelected) {
-        return items.value.filter((item: any) => !selections.value.some((s: any) => s === item))
-      }
-      return items.value
+    // const displayItems = computed(() => {
+    //   if (props.hideSelected) {
+    //     return items.value.filter((item: any) => !selections.value.some((s: any) => s === item))
+    //   }
+    //   return items.value
+    // })
+    // =========================================
+    // watch(model, (val) => {
+    //   console.log('on model changed', val.value)
+    // })
+    console.log(items)
+    const cascadeSelections = computed(() => {
+      const path: number[] = []
+      const cascadeSelections: InternalItem[][] = []
+      const findPath = (obj: InternalItem[] | undefined, level: number): Boolean => {
+        if (obj && Array.isArray(obj)) {
+          for (let i = 0; i < obj.length; i++) {
+            path.push(i);
+            cascadeSelections.push([obj[i]])
+            if (model.value.length > 0 && obj[i].value == model.value[0].value) {
+              return true;
+            } else {
+              if (obj[i].children) {
+                if (findPath(obj[i].children, level + 1)) {
+                  return true;
+                } else {
+                  path.pop();
+                  cascadeSelections.pop()
+                }
+              } else {
+                path.pop();
+                cascadeSelections.pop()
+              }
+            }
+          }
+        }
+        return false;
+      };
+
+      findPath(items.value, 1)
+
+      console.log(cascadeSelections)
+
+      return cascadeSelections
     })
+    const cascadeSelected = computed(() => {
+      return cascadeSelections.value.map((selection) => [selection[0].value])
+    })
+    console.log("cascadeSelected", cascadeSelected.value)
+    const cascadeDisplayItems = computed(() => {
+      const cascadeDisplayItems: InternalItem[][] = []
+      // cascadeDisplayItems.push(items.value)
+      const findPath = (obj: InternalItem[] | undefined, level: number): Boolean => {
+        if (obj && Array.isArray(obj)) {
+          for (let i = 0; i < obj.length; i++) {
+            cascadeDisplayItems.push(obj);
+            if (model.value.length > 0 && obj[i].value == model.value[0].value) {
+              return true;
+            } else {
+              if (obj[i].children) {
+                if (findPath(obj[i].children, level + 1)) {
+                  return true;
+                } else {
+                  cascadeDisplayItems.pop();
+                }
+              } else {
+                cascadeDisplayItems.pop();
+              }
+            }
+          }
+        }
+        return false;
+      };
+
+      if (model.value.length > 0) {
+        findPath(items.value, 1)
+        const nextLevelItems = cascadeDisplayItems.at(-1)?.find(item=>item.value == model.value[0].value)?.children
+        nextLevelItems && cascadeDisplayItems.push(nextLevelItems)
+      } else {
+        cascadeDisplayItems.push(items.value)
+      }
+
+      return cascadeDisplayItems
+    })
+    console.log("cascadeDisplayItems", cascadeDisplayItems.value)
+    // =========================================
 
     const listRef = ref<VList>()
 
@@ -208,22 +317,41 @@ export const VCascadeSelect = genericComponent<new <
         listRef.value?.focus('last')
       }
     }
-    function select (item: InternalItem) {
-      if (props.multiple) {
-        const index = selected.value.findIndex((selection: any) => props.valueComparator(selection, item.value))
-
-        if (index === -1) {
-          model.value = [...model.value, item]
-        } else {
-          const value = [...model.value]
-          value.splice(index, 1)
-          model.value = value
-        }
+    // ===================================
+    function cascadeSelect (item: InternalItem, index: number = -1) {
+      const fallback: InternalItem[] = []
+      if (model.value.length > 0 && model.value[0].value === item.value) {
+        cascadeSelections.value.forEach((e, i) => {
+          if (e.length > 0 && e[0].value === item.value) {
+            i > 0 && fallback.push(...cascadeSelections.value[i - 1])
+          }
+        })
+        model.value = fallback
       } else {
         model.value = [item]
-        menu.value = false
       }
+      // model.value = [item]
+      
+      // menu.value = false
+      console.log('cascadeSelect', model.value)
     }
+    // ===================================
+    // function select (item: InternalItem) {
+    //   if (props.multiple) {
+    //     const index = selected.value.findIndex((selection: any) => props.valueComparator(selection, item.value))
+
+    //     if (index === -1) {
+    //       model.value = [...model.value, item]
+    //     } else {
+    //       const value = [...model.value]
+    //       value.splice(index, 1)
+    //       model.value = value
+    //     }
+    //   } else {
+    //     model.value = [item]
+    //     menu.value = false
+    //   }
+    // }
     function onBlur (e: FocusEvent) {
       if (!listRef.value?.$el.contains(e.relatedTarget as HTMLElement)) {
         menu.value = false
@@ -234,19 +362,74 @@ export const VCascadeSelect = genericComponent<new <
         vTextFieldRef.value?.focus()
       }
     }
+    // ===================================
+    // TODO goto尚未确定是否在vuetify3中实现
+    function listScroll(container: string, up: boolean) {
+      const current = (document.querySelector(container) as HTMLElement).scrollTop;
+      const target = current + 48 + (up ? -48 * 3 : 48 * 3);
+      
+      window.scrollBy({
+        top: target,
+        left: 0,
+        behavior:'smooth'
+      })
+      // goTo(target, {
+      //   container: container,
+      //   easing: "easeInOutCubic",
+      //   offset: props.scrollOffset,
+      // });
+    }
+    function listScrollUp(container: string) {
+      listScroll(container, true);
+    }
+    function listScrollDown(container: string) {
+      listScroll(container, false);
+    }
+    function updateScrollTop (level: number, top: boolean) {
+      scrollTop.value[level] = top
+    }
+    function updateScrollBottom (level: number, bottom: boolean) {
+      scrollBottom.value[level] = bottom
+    }
+    /* 深度 */
+    const depth = computed(() => {
+      const hasChildren = (item: InternalItem) => item.children ? item.children.length > 0 : false
+      const depthArray: number[] = []
+      const calcDepth = (item: InternalItem, currentDepth: number) => {
+        if (item && hasChildren(item)) {
+          const nextDepth = currentDepth + 1
+          for (const child of item.children!) {
+            calcDepth(child, nextDepth)
+          }
+        } else {
+          depthArray.push(currentDepth)
+        }
+      }
+      items.value.forEach((item: InternalItem) => {
+        calcDepth(item, 1)
+      })
+      return Math.max(...depthArray)
+    })
+    const scrollTop = ref(new Array<boolean>)
+    const scrollBottom = ref(new Array<boolean>)
+    if (depth.value != -Infinity) {
+      scrollTop.value = new Array<boolean>(depth.value).fill(true)
+      scrollBottom.value = new Array<boolean>(depth.value).fill(true)
+    }
+    // ===================================
 
     useRender(() => {
       const hasChips = !!(props.chips || slots.chip)
-      const hasList = !!((!props.hideNoData || displayItems.value.length) || slots.prepend || slots.append || slots['no-data'])
+      const hasList = !!((!props.hideNoData || cascadeDisplayItems.value.at(-1)?.length) || slots.prepend || slots.append || slots['no-data'])
+      // const hasList = !!((!props.hideNoData || displayItems.value.length) || slots.prepend || slots.append || slots['no-data'])
       const [textFieldProps] = VTextField.filterProps(props)
       const cardList: JSX.Element[] = []
-      const depth = 3
       const colPattern = (depth: number) => {
-        return depth == 1 ? 12 : depth == 2 ? 6 : 4
+        return Math.floor(12 / depth)
       }
-      for (let i = 0; i< depth; i++) {
+      for (let i = 0; i< cascadeDisplayItems.value.length; i++) {
         cardList.push(
-          <VCol cols={ colPattern(depth) }>
+          <VCol cols={ colPattern(depth.value) }>
             <VCard
               style={[{ 'display': 'flex' }, { 'flex-direction': 'column' }]}
               class={[ 'py-1', 'mx-1' ]}
@@ -255,7 +438,7 @@ export const VCascadeSelect = genericComponent<new <
               rounded='0'
             >
               <VRow
-                style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }, { background: 'red' }]}
+                style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
                 class={[ 'ma-0' ]}
                 noGutters
               >
@@ -270,10 +453,13 @@ export const VCascadeSelect = genericComponent<new <
                   <VBtn
                     style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
                     variant='text'
+                    disabled={ scrollTop.value[i] }
+                    // @ts-ignore
+                    onClick={ () => listScrollUp(`.auto-hide-scrollbar-${i}`) }
                   >
                     <VIcon
                       class={[ 'no-bg-color-icon' ]}
-                    >mdi-chevron-up</VIcon>
+                    >{ scrollTop.value[i] ? 'mdi-blank' : 'mdi-chevron-up' }</VIcon>
                   </VBtn>
                 </VCol>
                 <VCol
@@ -281,53 +467,80 @@ export const VCascadeSelect = genericComponent<new <
                   cols='4'
                 ></VCol>
               </VRow>
-              <VCardText
-                class={[ 'pa-0', 'auto-hide-scrollbar', 'overflow-y-auto', 'flex-grow-1' ]}
-              >
-                <VList
-                  ref={ listRef }
-                  selected={ selected.value }
-                  selectStrategy={ props.multiple ? 'independent' : 'single-independent' }
-                  density='compact'
-                  // @ts-ignore
-                  onMousedown={ (e: MouseEvent) => e.preventDefault() }
-                  onFocusout={ onFocusout }
-                >
-                  { !displayItems.value.length && !props.hideNoData && (slots['no-data']?.() ?? (
-                    <VListItem title={ t(props.noDataText) } />
-                  ))}
+              {
+                withDirectives(
+                  <VCardText
+                    class={[ 'pa-0', {'auto-hide-scrollbar': !( scrollTop.value[i] && scrollBottom.value[i] )}, `auto-hide-scrollbar-${i}`, 'overflow-y-auto', 'flex-grow-1' ]}
+                  >
+                    <VList
+                      ref={ listRef }
+                      selected={ cascadeSelected.value[i] }
+                      selectStrategy={ props.multiple ? 'independent' : 'single-independent' }
+                      density='compact'
+                      // @ts-ignore
+                      onMousedown={ (e: MouseEvent) => e.preventDefault() }
+                      onFocusout={ onFocusout }
+                    >
+                      { !cascadeDisplayItems.value[i].length && !props.hideNoData && (slots['no-data']?.() ?? (
+                        <VListItem title={ t(props.noDataText) } />
+                      ))}
 
-                  { slots['prepend-item']?.() }
+                      { slots['prepend-item']?.() }
 
-                  { displayItems.value.map((item: any, index: any) => {
-                    if (slots.item) {
-                      return slots.item?.({
-                        item,
-                        index,
-                        props: mergeProps(item.props, { onClick: () => select(item) }),
-                      })
-                    }
+                      { cascadeDisplayItems.value[i].map((item: any, index: any) => {
+                        if (slots.item) {
+                          return slots.item?.({
+                            item,
+                            index,
+                            props: mergeProps(item.props, { onClick: () => cascadeSelect(item, i) }),
+                          })
+                        }
 
-                    return (
-                      <VListItem
-                        key={ index }
-                        { ...item.props }
-                        onClick={ () => select(item) }
-                      >
-                        {{
-                          prepend: ({ isSelected }) => props.multiple && !props.hideSelected ? (
-                            <VCheckboxBtn modelValue={ isSelected } ripple={ false } />
-                          ) : undefined,
-                        }}
-                      </VListItem>
-                    )
-                  })}
+                        return (
+                          <VListItem
+                            key={ index }
+                            color={ props.colors[i] }
+                            { ...item.props }
+                            // disabled={ cascadeSelections.value.length > i && cascadeSelections.value[i].length > 0 && item.value === cascadeSelections.value[i][0].value }
+                            onClick={ () => cascadeSelect(item, i) }
+                          >
+                            {{
+                              // prepend: ({ isSelected }) => props.multiple && !props.hideSelected ? (
+                              //   <VCheckboxBtn modelValue={ isSelected } ripple={ false } />
+                              // ) : undefined,
+                              prepend: () => (
+                                <VIcon>{ item.raw.icon || 'mdi-blank' }</VIcon>
+                              ),
+                              append: () => item.children ? (
+                                <VIcon>mdi-chevron-right</VIcon>
+                              ) : undefined,
+                            }}
+                          </VListItem>
+                        )
+                      })}
 
-                  { slots['append-item']?.() }
-                </VList>
-              </VCardText>
+                      { slots['append-item']?.() }
+                    </VList>
+                  </VCardText>,
+                  [[
+                    Scroll,
+                    (e: Event) => {
+                      const elem = e.target as HTMLElement
+                      if (elem.scrollTop == 0) {
+                        updateScrollTop(i, true)
+                      } else if (elem.scrollTop == elem.children[0].clientHeight - elem.clientHeight) {
+                        updateScrollBottom(i, true)
+                      } else {
+                        updateScrollTop(i, false)
+                        updateScrollBottom(i, false)
+                      }
+                    },
+                    '',
+                    { self: true } ]]
+                )
+              }
               <VRow
-                style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }, { background: 'red' }]}
+                style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
                 class={[ 'ma-0' ]}
                 noGutters
               >
@@ -342,10 +555,13 @@ export const VCascadeSelect = genericComponent<new <
                   <VBtn
                     style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
                     variant='text'
+                    disabled={ scrollBottom.value[i] }
+                    // @ts-ignore
+                    onClick={ () => listScrollDown(`.auto-hide-scrollbar-${i}`) }
                   >
                     <VIcon
                       class={[ 'no-bg-color-icon' ]}
-                    >mdi-chevron-down</VIcon>
+                    >{ scrollBottom.value[i] ? 'mdi-blank' : 'mdi-chevron-down' }</VIcon>
                   </VBtn>
                 </VCol>
                 <VCol
@@ -406,7 +622,6 @@ export const VCascadeSelect = genericComponent<new <
                     >
                       <VCardText
                         class={[ 'd-flex', 'flex-nowrap', 'py-0', 'pl-0', 'pr-5' ]}
-                        style={[{ background: 'green' }]}
                       >
                         <VRow noGutters>
                           { ...cardList }
@@ -416,16 +631,17 @@ export const VCascadeSelect = genericComponent<new <
                   )}
                 </VMenu>
 
-                { selections.value.map((item: any, index: any) => {
-                  function onChipClose (e: Event) {
-                    e.stopPropagation()
-                    e.preventDefault()
+                { cascadeSelections.value.map((items: any, index: any) => {
+                  const item = items[0]
+                  // function onChipClose (e: Event) {
+                  //   e.stopPropagation()
+                  //   e.preventDefault()
 
-                    select(item)
-                  }
+                  //   cascadeSelect(item)
+                  // }
 
                   const slotProps = {
-                    'onClick:close': onChipClose,
+                    // 'onClick:close': onChipClose,
                     modelValue: true,
                     'onUpdate:modelValue': undefined,
                   }
@@ -434,13 +650,24 @@ export const VCascadeSelect = genericComponent<new <
                     <div key={ item.value } class="v-select__selection">
                       { hasChips ? (
                         !slots.chip ? (
-                          <VChip
-                            key="chip"
-                            closable={ props.closableChips }
-                            size="small"
-                            text={ item.title }
-                            { ...slotProps }
-                          />
+                          <>
+                            { index != 0 && <VIcon color='grey-darken-1'>mdi-chevron-right</VIcon> }
+                            <VChip
+                              key="chip"
+                              closable={ props.closableChips }
+                              label
+                              color={ props.colors[index] }
+                              size="small"
+                              text={ item.title }
+                              { ...slotProps }
+                            >
+                              {{
+                                prepend: () => (
+                                  <VIcon start>{ item.raw.icon || 'mdi-blank' }</VIcon>
+                                )
+                              }}
+                            </VChip>
+                          </>
                         ) : (
                           <VDefaultsProvider
                             key="chip-defaults"
@@ -459,9 +686,9 @@ export const VCascadeSelect = genericComponent<new <
                         slots.selection?.({ item, index }) ?? (
                           <span class="v-select__selection-text">
                             { item.title }
-                            { props.multiple && (index < selections.value.length - 1) && (
+                            {/* { props.multiple && (index < selections.value.length - 1) && (
                               <span class="v-select__selection-comma">,</span>
-                            )}
+                            )} */}
                           </span>
                         )
                       )}
@@ -477,7 +704,7 @@ export const VCascadeSelect = genericComponent<new <
 
     return forwardRefs({
       menu,
-      select,
+      cascadeSelect,
     }, vTextFieldRef)
   },
 })
