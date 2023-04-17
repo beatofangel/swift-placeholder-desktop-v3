@@ -12,8 +12,8 @@ const isDevelopment = import.meta.env.DEV
 function createWindow () {
   // 创建浏览器窗口
   const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1600,
+    height: 900,
     webPreferences: {
       preload: path.join(__dirname, '../dist-electron/preload.js'),
       nodeIntegration: true,
@@ -30,7 +30,7 @@ function createWindow () {
 
   // 打开开发工具
   if (isDevelopment) {
-    mainWindow.webContents.openDevTools({ mode: 'undocked' })
+    mainWindow.webContents.openDevTools({ mode: 'right'/*'undocked'*/ })
   }
 }
 

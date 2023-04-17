@@ -1,4 +1,4 @@
-import { computed, withDirectives, mergeProps, ref } from 'vue'
+import { computed, withDirectives, mergeProps, ref, watch, Ref } from 'vue'
 // @ts-ignore
 import { deepEqual, genericComponent, omit, propsFactory, useRender, wrapInArray } from 'vuetify/lib/util/index.mjs'
 
@@ -25,10 +25,12 @@ import "./VCascadeSelect.css"
 // Directives
 // @ts-ignore
 import { Scroll } from 'vuetify/lib/directives/scroll/index.mjs'
+// @ts-ignore
+import { Intersect } from 'vuetify/lib/directives/intersect/index.mjs'
 
 // Service
 // @ts-ignore
-import goTo from 'vuetify/lib/services/goto/index.mjs'
+// import goTo from 'vuetify/lib/services/goto/index.mjs'
 
 // @ts-ignore
 import { makeVTextFieldProps } from 'vuetify/lib/components/VTextField/VTextField.mjs'
@@ -37,7 +39,6 @@ import { VList, VListItem } from 'vuetify/lib/components/VList/index'
 import { VChip } from 'vuetify/lib/components/VChip/index'
 import { VMenu } from 'vuetify/lib/components/VMenu/index'
 import { VTextField } from 'vuetify/lib/components/VTextField/index'
-import { VCheckboxBtn } from 'vuetify/lib/components/VCheckbox/index'
 import { VDefaultsProvider } from 'vuetify/lib/components/VDefaultsProvider/index'
 import { VCard, VCardText } from 'vuetify/lib/components/VCard/index'
 import { VRow, VCol } from 'vuetify/lib/components/VGrid/index'
@@ -71,8 +72,9 @@ export const defaultMenuProps = {
   closeOnContentClick: false,
   disableKeys: true,
   openOnClick: false,
-  maxHeight: 296, //304,
-  listHeaderMaxHeight: 24,
+  maxHeight: 304,
+  listHeaderMaxHeight: 28,
+  displayItemCount: 6
 }
 
 export const makeSelectProps = propsFactory({
@@ -197,9 +199,24 @@ export const VCascadeSelect = genericComponent<new <
     //   return items.value
     // })
     // =========================================
-    // watch(model, (val) => {
-    //   console.log('on model changed', val.value)
+    // watch(menu, (val) => {
+    //   console.log('on menu visible changed', val)
+    //   if (val) {
+    //     setTimeout(() => {
+    //       for (let i = 0; i < cascadeDisplayItems.value.length; i++) {
+    //         console.log (i)
+    //         updateScrollTop(i, true)
+    //       }
+    //     }, 500);
+    //     // nextTick(()=>{
+    //     //   for (let i = 0; i < cascadeDisplayItems.value.length; i++) {
+    //     //     console.log (i)
+    //     //     updateScrollTop(i, true)
+    //     //   }
+    //     // })
+    //   }
     // })
+    
     console.log(items)
     const cascadeSelections = computed(() => {
       const path: number[] = []
@@ -277,7 +294,8 @@ export const VCascadeSelect = genericComponent<new <
     console.log("cascadeDisplayItems", cascadeDisplayItems.value)
     // =========================================
 
-    const listRef = ref<VList>()
+    // const listRef = ref<VList>()
+    const listRefs = new Array<Ref>()
 
     function onClear (e: MouseEvent) {
       if (props.openOnClear) {
@@ -308,16 +326,35 @@ export const VCascadeSelect = genericComponent<new <
       }
 
       if (e.key === 'ArrowDown') {
-        listRef.value?.focus('next')
+        // listRef.value?.focus('next')
+        listRefs.length > 0 && listRefs[0].value?.focus('next')
       } else if (e.key === 'ArrowUp') {
-        listRef.value?.focus('prev')
+        // listRef.value?.focus('prev')
+        listRefs.length > 0 && listRefs[0].value?.focus('prev')
       } else if (e.key === 'Home') {
-        listRef.value?.focus('first')
+        // listRef.value?.focus('first')
+        listRefs.length > 0 && listRefs[0].value?.focus('first')
       } else if (e.key === 'End') {
-        listRef.value?.focus('last')
+        // listRef.value?.focus('last')
+        listRefs.length > 0 && listRefs[0].value?.focus('last')
       }
     }
     // ===================================
+    function onScroll(elem: HTMLElement, i: number) {
+      if (elem.scrollTop == 0) {
+        updateScrollTop(i, true)
+        updateScrollBottom(i, false)
+      } else if (elem.scrollTop + 1 >= elem.children[0].clientHeight - elem.clientHeight) { // fix: scrollTop为小数的问题
+        updateScrollTop(i, false)
+        updateScrollBottom(i, true)
+      } else {
+        updateScrollTop(i, false)
+        updateScrollBottom(i, false)
+      }
+    }
+    function onListOpened(val: any) {
+      console.log(val)
+    }
     function cascadeSelect (item: InternalItem, index: number = -1) {
       const fallback: InternalItem[] = []
       if (model.value.length > 0 && model.value[0].value === item.value) {
@@ -353,9 +390,16 @@ export const VCascadeSelect = genericComponent<new <
     //   }
     // }
     function onBlur (e: FocusEvent) {
-      if (!listRef.value?.$el.contains(e.relatedTarget as HTMLElement)) {
-        menu.value = false
-      }
+      // for (const lstRef of listRefs) {
+      //   if (!lstRef.value?.$el.contains(e.relatedTarget as HTMLElement)) {
+      //     menu.value = false
+      //     break
+      //     // console.log('onBlur')
+      //   }
+      // }
+      // if (!listRef.value?.$el.contains(e.relatedTarget as HTMLElement)) {
+      //   menu.value = false
+      // }
     }
     function onFocusout (e: FocusEvent) {
       if (e.relatedTarget == null) {
@@ -364,13 +408,16 @@ export const VCascadeSelect = genericComponent<new <
     }
     // ===================================
     // TODO goto尚未确定是否在vuetify3中实现
-    function listScroll(container: string, up: boolean) {
-      const current = (document.querySelector(container) as HTMLElement).scrollTop;
-      const target = current + 48 + (up ? -48 * 3 : 48 * 3);
+    function listScroll(container: string, offset: number) {
+      const $container = document.querySelector(container) as HTMLElement
+      // const current = $container.scrollTop;
+      // const target = current + 48 + (up ? -48 * 3 : 48 * 3);
+      // const offset = upOrDown ? -40 * 3 : 40 * 3;
+      // console.log(current, offset)
       
-      window.scrollBy({
-        top: target,
-        left: 0,
+      $container.scrollBy({
+        top: offset,
+        // left: 0,
         behavior:'smooth'
       })
       // goTo(target, {
@@ -380,15 +427,17 @@ export const VCascadeSelect = genericComponent<new <
       // });
     }
     function listScrollUp(container: string) {
-      listScroll(container, true);
+      listScroll(container, -40 * 3);
     }
     function listScrollDown(container: string) {
-      listScroll(container, false);
+      listScroll(container, 40 * 3);
     }
     function updateScrollTop (level: number, top: boolean) {
+      // top && console.log('updateScrollTop', level, (document.querySelector(`.auto-hide-scrollbar-${level}`) as HTMLElement)?.scrollTop)
       scrollTop.value[level] = top
     }
     function updateScrollBottom (level: number, bottom: boolean) {
+      // bottom && console.log('updateScrollBottom', level, (document.querySelector(`.auto-hide-scrollbar-${level}`) as HTMLElement)?.scrollTop)
       scrollBottom.value[level] = bottom
     }
     /* 深度 */
@@ -427,13 +476,26 @@ export const VCascadeSelect = genericComponent<new <
       const colPattern = (depth: number) => {
         return Math.floor(12 / depth)
       }
+      listRefs.splice(0)
+      // const isScrollTop = (i: number) => {
+      //   const scrollTop = (document.querySelector(`.auto-hide-scrollbar-${i}`) as HTMLElement)?.scrollTop
+      //   // console.log ('isScrollTop:', scrollTop)
+      //   return scrollTop == 0
+      // }
+      // const isScrollBottom = (i: number) => {
+      //   const scrollTop = (document.querySelector(`.auto-hide-scrollbar-${i}`) as HTMLElement)?.scrollTop
+      //   // console.log ('isScrollBottom:', scrollTop)
+      //   return scrollTop == 40 * cascadeDisplayItems.value[i].length - (defaultMenuProps.maxHeight - 80)
+      // }
       for (let i = 0; i< cascadeDisplayItems.value.length; i++) {
+        const listRef = ref<VList>()
+        listRefs.push(listRef)
         cardList.push(
           <VCol cols={ colPattern(depth.value) }>
             <VCard
               style={[{ 'display': 'flex' }, { 'flex-direction': 'column' }]}
               class={[ 'py-1', 'mx-1' ]}
-              maxHeight={ defaultMenuProps.maxHeight }
+              height={ defaultMenuProps.maxHeight }
               flat
               rounded='0'
             >
@@ -451,15 +513,16 @@ export const VCascadeSelect = genericComponent<new <
                   cols='4'
                 >
                   <VBtn
-                    style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
+                    size='small'
                     variant='text'
-                    disabled={ scrollTop.value[i] }
+                    disabled={ cascadeDisplayItems.value[i].length <= defaultMenuProps.displayItemCount || scrollTop.value[i] }
                     // @ts-ignore
                     onClick={ () => listScrollUp(`.auto-hide-scrollbar-${i}`) }
                   >
-                    <VIcon
+                    {/* <VIcon
                       class={[ 'no-bg-color-icon' ]}
-                    >{ scrollTop.value[i] ? 'mdi-blank' : 'mdi-chevron-up' }</VIcon>
+                    >{ isScrollTop(i) ? 'mdi-blank' : 'mdi-chevron-up' }</VIcon> */}
+                    <VIcon class={[ 'no-bg-color-icon' ]}>mdi-chevron-up</VIcon>
                   </VBtn>
                 </VCol>
                 <VCol
@@ -473,13 +536,16 @@ export const VCascadeSelect = genericComponent<new <
                     class={[ 'pa-0', {'auto-hide-scrollbar': !( scrollTop.value[i] && scrollBottom.value[i] )}, `auto-hide-scrollbar-${i}`, 'overflow-y-auto', 'flex-grow-1' ]}
                   >
                     <VList
+                      class={[ 'pa-0' ]}
                       ref={ listRef }
                       selected={ cascadeSelected.value[i] }
                       selectStrategy={ props.multiple ? 'independent' : 'single-independent' }
                       density='compact'
+                      minHeight={ defaultMenuProps.maxHeight - defaultMenuProps.listHeaderMaxHeight * 2 - 8 }
                       // @ts-ignore
                       onMousedown={ (e: MouseEvent) => e.preventDefault() }
                       onFocusout={ onFocusout }
+                      onUpdate:opened={ onListOpened }
                     >
                       { !cascadeDisplayItems.value[i].length && !props.hideNoData && (slots['no-data']?.() ?? (
                         <VListItem title={ t(props.noDataText) } />
@@ -501,15 +567,11 @@ export const VCascadeSelect = genericComponent<new <
                             key={ index }
                             color={ props.colors[i] }
                             { ...item.props }
-                            // disabled={ cascadeSelections.value.length > i && cascadeSelections.value[i].length > 0 && item.value === cascadeSelections.value[i][0].value }
                             onClick={ () => cascadeSelect(item, i) }
                           >
                             {{
-                              // prepend: ({ isSelected }) => props.multiple && !props.hideSelected ? (
-                              //   <VCheckboxBtn modelValue={ isSelected } ripple={ false } />
-                              // ) : undefined,
                               prepend: () => (
-                                <VIcon>{ item.raw.icon || 'mdi-blank' }</VIcon>
+                                <VIcon icon={ item.raw.icon || 'mdi-blank' }></VIcon> // fix: <VIcon>{ item.raw.icon || 'mdi-blank' }</VIcon>写法图标刷新有问题
                               ),
                               append: () => item.children ? (
                                 <VIcon>mdi-chevron-right</VIcon>
@@ -522,21 +584,40 @@ export const VCascadeSelect = genericComponent<new <
                       { slots['append-item']?.() }
                     </VList>
                   </VCardText>,
-                  [[
-                    Scroll,
-                    (e: Event) => {
-                      const elem = e.target as HTMLElement
-                      if (elem.scrollTop == 0) {
-                        updateScrollTop(i, true)
-                      } else if (elem.scrollTop == elem.children[0].clientHeight - elem.clientHeight) {
-                        updateScrollBottom(i, true)
-                      } else {
-                        updateScrollTop(i, false)
-                        updateScrollBottom(i, false)
+                  [
+                    [
+                      Scroll,
+                      (e: Event) => {
+                        const elem = e.target as HTMLElement
+                        onScroll(elem, i)
+                      },
+                      '',
+                      { self: true }
+                    ],
+                    [ /* 控制上下翻页按钮是否可用 */
+                      Intersect,
+                      (isIntersecting: boolean, entries: Array<IntersectionObserverEntry>) => {
+                        if (isIntersecting) {
+                          const $ele = entries[0].target as HTMLElement
+                          for (let i = 0; i < cascadeDisplayItems.value.length; i++) {
+                            if ($ele.classList.contains(`auto-hide-scrollbar-${i}`)) {
+                              const selectedItem = $ele.querySelector('.v-list-item--active')
+                              if (selectedItem) {
+                                // 滚动到选中项
+                                selectedItem.scrollIntoView()
+                              } else {
+                                $ele.querySelector('.v-list-item')?.scrollTo({ top: 0 })
+                              }
+                              setTimeout(() => {
+                                onScroll($ele, i)
+                              }, 200)
+                              break
+                            }
+                          }
+                        }
                       }
-                    },
-                    '',
-                    { self: true } ]]
+                    ]
+                  ]
                 )
               }
               <VRow
@@ -553,15 +634,16 @@ export const VCascadeSelect = genericComponent<new <
                   cols='4'
                 >
                   <VBtn
-                    style={[{ maxHeight: defaultMenuProps.listHeaderMaxHeight }]}
+                    size='small'
                     variant='text'
-                    disabled={ scrollBottom.value[i] }
+                    disabled={ cascadeDisplayItems.value[i].length <= defaultMenuProps.displayItemCount || scrollBottom.value[i] }
                     // @ts-ignore
                     onClick={ () => listScrollDown(`.auto-hide-scrollbar-${i}`) }
                   >
-                    <VIcon
+                    {/* <VIcon
                       class={[ 'no-bg-color-icon' ]}
-                    >{ scrollBottom.value[i] ? 'mdi-blank' : 'mdi-chevron-down' }</VIcon>
+                    >{ isScrollBottom(i) ? 'mdi-blank' : 'mdi-chevron-down' }</VIcon> */}
+                    <VIcon class={[ 'no-bg-color-icon' ]}>mdi-chevron-down</VIcon>
                   </VBtn>
                 </VCol>
                 <VCol
@@ -596,7 +678,7 @@ export const VCascadeSelect = genericComponent<new <
           onClick:clear={ onClear }
           onMousedown:control={ onMousedownControl }
           // @ts-ignore
-          onBlur={ onBlur }
+          // onBlur={ onBlur }
           onKeydown={ onKeydown }
         >
           {{
@@ -609,7 +691,7 @@ export const VCascadeSelect = genericComponent<new <
                   activator="parent"
                   contentClass="v-select__content"
                   eager={ props.eager }
-                  maxHeight={ 310 }
+                  // maxHeight={ 310 }
                   openOnClick={ false }
                   closeOnContentClick={ false }
                   transition={ props.transition }
@@ -621,7 +703,7 @@ export const VCascadeSelect = genericComponent<new <
                       variant='flat'
                     >
                       <VCardText
-                        class={[ 'd-flex', 'flex-nowrap', 'py-0', 'pl-0', 'pr-5' ]}
+                        class={[ 'd-flex', 'flex-nowrap', 'py-0', 'pl-0', 'pr-2' ]}
                       >
                         <VRow noGutters>
                           { ...cardList }
