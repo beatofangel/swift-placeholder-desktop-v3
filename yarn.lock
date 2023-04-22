@@ -806,10 +806,10 @@
     "@babel/plugin-transform-typescript" "^7.20.7"
     "@vue/babel-plugin-jsx" "^1.1.1"
 
-"@vitejs/plugin-vue@^3.0.3":
-  version "3.2.0"
-  resolved "https://registry.npmmirror.com/@vitejs/plugin-vue/-/plugin-vue-3.2.0.tgz#a1484089dd85d6528f435743f84cdd0d215bbb54"
-  integrity sha512-E0tnaL4fr+qkdCNxJ+Xd0yM31UwMkQje76fsDVBBUCoGOUPexu2VDUYHL8P4CwV+zMvWw6nlRw19OnRKmYAJpw==
+"@vitejs/plugin-vue@^4.1.0":
+  version "4.1.0"
+  resolved "https://registry.npmmirror.com/@vitejs/plugin-vue/-/plugin-vue-4.1.0.tgz#b6a9d83cd91575f7ee15593f6444397f68751073"
+  integrity sha512-++9JOAFdcXI3lyer9UKUV4rfoQ3T1RN8yDqoCLar86s0xQct5yblxAE+yWgRnU5/0FOlVCpTZpYSBV/bGWrSrQ==
 
 "@volar/language-core@1.3.0-alpha.0":
   version "1.3.0-alpha.0"
@@ -3286,6 +3286,11 @@ smart-buffer@^4.0.2:
   resolved "https://registry.npmmirror.com/smart-buffer/-/smart-buffer-4.2.0.tgz#6e1d71fa4f18c05f7d0ff216dd16a481d0e8d9ae"
   integrity sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==
 
+sortablejs@1.14.0:
+  version "1.14.0"
+  resolved "https://registry.npmmirror.com/sortablejs/-/sortablejs-1.14.0.tgz#6d2e17ccbdb25f464734df621d4f35d4ab35b3d8"
+  integrity sha512-pBXvQCs5/33fdN1/39pPL0NZF20LeRbLQ5jtnheIPN9JQAaufGjKdWduZn4U7wCtVuzKhmRkI0DFYHYRbB2H1w==
+
 "source-map-js@>=0.6.2 <2.0.0", source-map-js@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmmirror.com/source-map-js/-/source-map-js-1.0.2.tgz#adbc361d9c62df380125e7f161f71c826f1e490c"
@@ -3596,6 +3601,11 @@ vue-template-compiler@^2.7.14:
     de-indent "^1.0.2"
     he "^1.2.0"
 
+vue-toastification@^2.0.0-rc.5:
+  version "2.0.0-rc.5"
+  resolved "https://registry.npmmirror.com/vue-toastification/-/vue-toastification-2.0.0-rc.5.tgz#92798604d806ae473cfb76ed776fae294280f8f8"
+  integrity sha512-q73e5jy6gucEO/U+P48hqX+/qyXDozAGmaGgLFm5tXX4wJBcVsnGp4e/iJqlm9xzHETYOilUuwOUje2Qg1JdwA==
+
 vue-tsc@^1.0.9:
   version "1.2.0"
   resolved "https://registry.npmmirror.com/vue-tsc/-/vue-tsc-1.2.0.tgz#2b64b960cc96208492541394423ace589a461be6"
@@ -3603,6 +3613,13 @@ vue-tsc@^1.0.9:
   dependencies:
     "@volar/vue-language-core" "1.2.0"
     "@volar/vue-typescript" "1.2.0"
+
+vue3-draggable-next@^4.1.4:
+  version "4.1.4"
+  resolved "https://registry.npmmirror.com/vue3-draggable-next/-/vue3-draggable-next-4.1.4.tgz#84e9e2da2e1ece7631b045167db90d400bd52127"
+  integrity sha512-29wEVebHRk0ybJEvmcQ+R/Or7Ogtp5/jc1WhVk5nEhDR7uq+iWHodScxWjG4xg4jrfA1KGWltcaGyklPpFC0qQ==
+  dependencies:
+    sortablejs "1.14.0"
 
 vue@^3.2.13:
   version "3.2.47"
@@ -3615,10 +3632,10 @@ vue@^3.2.13:
     "@vue/server-renderer" "3.2.47"
     "@vue/shared" "3.2.47"
 
-vuetify@3.1.12:
-  version "3.1.12"
-  resolved "https://registry.npmmirror.com/vuetify/-/vuetify-3.1.12.tgz#f3b8a61d176cbfd876f7208ece21e4a1e434ec6a"
-  integrity sha512-6SOMWzNtziDdi/Noeg0l9Q5o20amIuqmj9V5W8fV1nCNdQUZsi6mt9iN+UcfjqwAaALS/z5Nbd4v5OJxy8M4Rw==
+vuetify@^3.1.15:
+  version "3.1.15"
+  resolved "https://registry.npmmirror.com/vuetify/-/vuetify-3.1.15.tgz#aacee61d81dcaaeabaae44f68172de142dadd274"
+  integrity sha512-uxB4UCrP+hFyJaoSsVObAGBRD73qq5ga7HULepzGoMeUWap2H99mcqmMdN/a/Yp4ODK3gT8EcUeph3EgEcsArQ==
 
 webfontloader@^1.0.0:
   version "1.6.28"

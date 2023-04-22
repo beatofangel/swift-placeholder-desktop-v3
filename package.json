@@ -26,7 +26,9 @@
     "sqlite": "^4.1.2",
     "vue": "^3.2.13",
     "vue-router": "^4.0.0",
-    "vuetify": "3.1.12",
+    "vue-toastification": "^2.0.0-rc.5",
+    "vue3-draggable-next": "^4.1.4",
+    "vuetify": "^3.1.15",
     "webfontloader": "^1.0.0"
   },
   "devDependencies": {
@@ -35,7 +37,7 @@
     "@types/lodash": "^4.14.191",
     "@types/node": "^18.11.9",
     "@types/webfontloader": "^1.6.35",
-    "@vitejs/plugin-vue": "^3.0.3",
+    "@vitejs/plugin-vue": "^4.1.0",
     "@vitejs/plugin-vue-jsx": "^3.0.1",
     "@vue/eslint-config-typescript": "^11.0.0",
     "cross-env": "^7.0.3",
@@ -52,7 +54,7 @@
   },
   "build": {
     "appId": "com.swiftplaceholder.your-app",
-    "productName": "swift-placeholder-desktop-v3",
+    "productName": "Swift Placeholder",
     "copyright": "Copyright © 2023 Eric Wang",
     "mac": {
       "category": "public.app-category.utilities"

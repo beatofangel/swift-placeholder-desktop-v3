@@ -157,6 +157,7 @@ export const VCascadeSelect = genericComponent<new <
     ...makeTransitionProps({ transition: { component: VDialogTransition } }),
   },
   emits: {
+    'update:focused': (focused: boolean) => true,
     'update:modelValue': (val: any) => true,
     'update:menu': (val: boolean) => true,
   },
@@ -292,6 +293,9 @@ export const VCascadeSelect = genericComponent<new <
       return cascadeDisplayItems
     })
     console.log("cascadeDisplayItems", cascadeDisplayItems.value)
+    const isFocused = ref(false)
+    let keyboardLookupPrefix = ''
+    let keyboardLookupLastTime: number
     // =========================================
 
     // const listRef = ref<VList>()
@@ -337,6 +341,29 @@ export const VCascadeSelect = genericComponent<new <
       } else if (e.key === 'End') {
         // listRef.value?.focus('last')
         listRefs.length > 0 && listRefs[0].value?.focus('last')
+      }
+      // html select hotkeys
+      const KEYBOARD_LOOKUP_THRESHOLD = 1000 // milliseconds
+      function checkPrintable(e: KeyboardEvent) {
+          const isPrintableChar = e.key.length === 1
+          const noModifier = ! e.ctrlKey && ! e.metaKey && ! e.altKey
+          return isPrintableChar && noModifier
+      }
+      if (props.multiple || ! checkPrintable(e)) 
+          return
+      
+      const now = performance.now()
+      if (now - keyboardLookupLastTime > KEYBOARD_LOOKUP_THRESHOLD) {
+          keyboardLookupPrefix = ''
+      }
+      keyboardLookupPrefix += e.key.toLowerCase()
+      keyboardLookupLastTime = now
+      const item = items.value.find((item: { title: string }) => item
+          .title
+          .toLowerCase()
+          .startsWith(keyboardLookupPrefix))
+      if (item !== undefined) {
+          model.value = [item]
       }
     }
     // ===================================
@@ -406,6 +433,9 @@ export const VCascadeSelect = genericComponent<new <
         vTextFieldRef.value?.focus()
       }
     }
+    function onFocusin(e: FocusEvent) {
+      isFocused.value = true
+    }
     // ===================================
     // TODO goto尚未确定是否在vuetify3中实现
     function listScroll(container: string, offset: number) {
@@ -470,8 +500,12 @@ export const VCascadeSelect = genericComponent<new <
     useRender(() => {
       const hasChips = !!(props.chips || slots.chip)
       const hasList = !!((!props.hideNoData || cascadeDisplayItems.value.at(-1)?.length) || slots.prepend || slots.append || slots['no-data'])
+      const isDirty = model.value.length > 0
       // const hasList = !!((!props.hideNoData || displayItems.value.length) || slots.prepend || slots.append || slots['no-data'])
       const [textFieldProps] = VTextField.filterProps(props)
+      const placeholder = isDirty || (! isFocused.value && props.label && !props.persistentPlaceholder)
+                        ? undefined
+                        : props.placeholder
       const cardList: JSX.Element[] = []
       const colPattern = (depth: number) => {
         return Math.floor(12 / depth)
@@ -544,6 +578,7 @@ export const VCascadeSelect = genericComponent<new <
                       minHeight={ defaultMenuProps.maxHeight - defaultMenuProps.listHeaderMaxHeight * 2 - 8 }
                       // @ts-ignore
                       onMousedown={ (e: MouseEvent) => e.preventDefault() }
+                      onFocusin={ onFocusin }
                       onFocusout={ onFocusout }
                       onUpdate:opened={ onListOpened }
                     >
@@ -662,8 +697,9 @@ export const VCascadeSelect = genericComponent<new <
           { ...textFieldProps }
           modelValue={ model.value.map((v: { props: { value: any } }) => v.props.value).join(', ') }
           onUpdate:modelValue={ v => { if (v == null) model.value = [] } }
+          v-model:focused = { isFocused.value }
           validationValue={ model.externalValue }
-          dirty={ model.value.length > 0 }
+          dirty={ isDirty }
           class={[
             'v-select',
             {
@@ -675,6 +711,7 @@ export const VCascadeSelect = genericComponent<new <
           ]}
           appendInnerIcon={ props.menuIcon }
           readonly
+          placeholder={ placeholder }
           onClick:clear={ onClear }
           onMousedown:control={ onMousedownControl }
           // @ts-ignore
@@ -785,6 +822,7 @@ export const VCascadeSelect = genericComponent<new <
     })
 
     return forwardRefs({
+      isFocused,
       menu,
       cascadeSelect,
     }, vTextFieldRef)

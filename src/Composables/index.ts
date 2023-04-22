@@ -1,0 +1,1 @@
+export const appName = await window.appService.appName()

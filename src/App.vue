@@ -23,4 +23,8 @@
 *::-webkit-scrollbar-thumb:hover {
   background: rgb(var(--v-scrollbarThumbHover));
 }
+.v-btn--closable.v-btn--variant-text .v-btn__overlay {
+  background-color: transparent;
+}
+
 </style>
