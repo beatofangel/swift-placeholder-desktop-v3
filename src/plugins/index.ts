@@ -8,7 +8,7 @@
 import { loadFonts } from './webfontloader'
 import vuetify from './vuetify'
 import router from '../router'
-import CommonDialogPlugin from '@/components/common/CommonDialogPlugin';
+import CommonDialogPlugin from '@/components/common/CommonDialog';
 import Toast, { PluginOptions } from "vue-toastification";
 import "vue-toastification/dist/index.css";
 const options: PluginOptions = {
