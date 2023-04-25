@@ -14,13 +14,15 @@
     ></v-cascade-select>
     <!-- <CommonDialog
       v-model="dialog"
-      text="测试内容"
-      warning
+      text="测试内容3"
+      error
       cancelable
       @confirm="handleConfirm"
       @cancel="handleCancel"
     ></CommonDialog> -->
-    <v-btn @click="showDialog">test</v-btn>
+    <v-btn @click="showDialog({info: true, cancelable: true, closable: false, persistent: false})">info</v-btn>
+    <v-btn @click="showDialog({warning: true})">warning</v-btn>
+    <v-btn @click="showDialog({error: true})">error</v-btn>
   </v-container>
 </template>
 
@@ -54,11 +56,13 @@ watch(dialog, (val) => {
   console.log('dialog', val)
 })
 // TODO 对话框无法关闭
-function showDialog() {
+function showDialog(data: any) {
   proxy.$dialog({
+    title: '测试标题 - 对话框',
     text: '测试内容',
-    warning: true,
-    cancelable: true,
+    ...data,
+    'onUpdate:modelValue': (val: boolean) => {console.log('onUpdate:modelValue', val)},
+    'onClosed': () => { console.log('this is my onClosed event handler.') },
     onConfirm: handleConfirm,
     onCancel: handleCancel,
   })

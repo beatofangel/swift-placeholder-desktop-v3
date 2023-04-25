@@ -38,19 +38,19 @@ function createWindow () {
 // 和创建浏览器窗口的时候调用
 // 部分 API 在 ready 事件触发后才能使用。
 app.whenReady().then(async () => {
-  // if (isDevelopment) {
-  //   // Install Vue Devtools
-  //   try {
-  //     /****************** 加载本地vue-devTools **************/
-  //     const { session } = require("electron");
-  //     session.defaultSession.loadExtension(
-  //       path.resolve(__dirname, "../../vue-devtools/packages/shell-chrome")
-  //     ); 
-  //     /*****************************************************/
-  //   } catch (e: any) {
-  //     log.error('Vue Devtools failed to install:', e.toString())
-  //   }
-  // }
+  if (isDevelopment) {
+    // Install Vue Devtools
+    try {
+      /****************** 加载本地vue-devTools **************/
+      const { session } = require("electron");
+      session.defaultSession.loadExtension(
+        path.resolve(__dirname, "../../vue-devtools/packages/shell-chrome")
+      ); 
+      /*****************************************************/
+    } catch (e: any) {
+      log.error('Vue Devtools failed to install:', e.toString())
+    }
+  }
 
   await sequelize.sync({
     alter: process.env.NODE_ENV === 'development' && {

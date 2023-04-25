@@ -1,5 +1,13 @@
 export {}
 
+export interface Session extends Record<string, any> {
+  declare id: string
+  declare name: string
+  declare type: string
+  declare businessCategory: string
+  declare templates: string[]
+}
+
 export interface CommonListItem {
   id: string,
   name: string,
@@ -12,7 +20,11 @@ export interface CommonListItem {
 declare global {
   interface Window {
     replaceService: {
-      findBusinessCategoryCascaded: () => Promise<any>
+      findBusinessCategoryCascaded: () => Promise<any>,
+      findTemplateByBcId: ({ bcId }: { bcId: string }) => Promise<any>
+    },
+    store: {
+      saveSession: (session: Session) => Promise<any>
     },
     commonService: {
       find: (modelName: string, condition: object) => Promise<any>,
