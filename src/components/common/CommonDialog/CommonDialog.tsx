@@ -115,6 +115,7 @@ export const CommonDialog = defineComponent({
   emits: {
     "closed": () => true,
     "unmounted": () => true,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     "update:modelValue": (val: boolean) => true,
     confirm: () => true,
     cancel: () => true,
@@ -135,7 +136,7 @@ export const CommonDialog = defineComponent({
       this.$emit('closed')
     }
   },
-  setup(props, ctx) {
+  setup(props/* , ctx */) {
     const visible = ref(props.modelValue)
     return {
       visible
