@@ -8,7 +8,7 @@ import {
 import { VBtn } from "vuetify/lib/components/VBtn/index";
 import { VIcon } from "vuetify/lib/components/VIcon/index";
 import { VToolbar, VToolbarTitle } from "vuetify/lib/components/VToolbar/index";
-import { appName } from "@/composables";
+import { appName } from "@/composablesOld";
 import { VHover } from "vuetify/lib/components/VHover/index";
 import { isBoolean, isString } from "lodash";
 
