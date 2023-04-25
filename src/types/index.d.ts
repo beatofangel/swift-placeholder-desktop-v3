@@ -1,4 +1,4 @@
-export {}
+export { }
 
 export interface Session extends Record<string, any> {
   declare id: string
@@ -6,6 +6,10 @@ export interface Session extends Record<string, any> {
   declare type: string
   declare businessCategory: string
   declare templates: string[]
+}
+
+export enum EditMode {
+  Create = 1, Read = 2, Update = 3, Delete = 4
 }
 
 export interface CommonListItem {

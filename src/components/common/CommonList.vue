@@ -102,11 +102,12 @@
 <script lang="ts" setup>
 import { useToast } from "vue-toastification";
 import { watch } from "vue"
-import { ref, reactive } from "vue"
+import { ref, reactive,getCurrentInstance } from "vue"
 import { defineComponent } from "vue"
 import draggable from "vue3-draggable-next"
 import { CommonListItem } from "@/types"
 import { computed } from "vue";
+const { proxy } = getCurrentInstance()
 const toast = useToast()
 const props = defineProps({
   condition: {
@@ -266,7 +267,7 @@ function showEdit(val: CommonListItem) {
 
 function handleDelete(delItem: CommonListItem) {
   // this.item = JSON.parse(JSON.stringify(item))
-  this.$dialog.confirm({
+  proxy.$dialog.confirm({
     text: `确定要删除${this.title}${delItem['name'] ? `：${delItem['name']}` : '' }？`
   }).then(res => {
     if (res) {

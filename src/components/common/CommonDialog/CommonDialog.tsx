@@ -1,4 +1,4 @@
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, VNodeChild } from "vue";
 import { VDialog } from "vuetify/lib/components/VDialog/index";
 import {
   VCard,
@@ -15,8 +15,26 @@ import { isBoolean, isString } from "lodash";
 import "./CommonDialog.css";
 
 const validateAutoBoolean = (val: Boolean | String) => {
-  return isString(val) && val == 'auto' || isBoolean(val)
+  return (isString(val) && val == "auto") || isBoolean(val);
+};
+
+export interface CommonDialogProps {
+  width: number | string;
+  minWidth: number | string;
+  modelValue: boolean;
+  attach: string | boolean | Element;
+  title: string;
+  text: string;
+  info: boolean;
+  warning: boolean;
+  error: boolean;
+  persistent: boolean | "auto";
+  closable: boolean | "auto";
+  cancelable: boolean | "auto";
+  cancelButtonText: string;
+  okButtonText: string;
 }
+
 export const CommonDialog = defineComponent({
   name: "CommonDialog",
   props: {
@@ -34,30 +52,34 @@ export const CommonDialog = defineComponent({
     },
     attach: {
       type: [String, Boolean, Element],
-      default: '#app'
+      default: "#app",
     },
     title: {
       type: String,
       default: appName,
     },
-    text: String,
+    text: {
+      type: [String, Function],
+      default: "[phCommonDialogText]",
+      required: true,
+    },
     info: Boolean,
     warning: Boolean,
     error: Boolean,
     persistent: {
       type: [Boolean, String],
-      default: 'auto',
-      validator: validateAutoBoolean
+      default: "auto",
+      validator: validateAutoBoolean,
     },
     closable: {
       type: [Boolean, String],
-      default: 'auto',
-      validator: validateAutoBoolean
+      default: "auto",
+      validator: validateAutoBoolean,
     },
     cancelable: {
       type: [Boolean, String],
-      default: 'auto',
-      validator: validateAutoBoolean
+      default: "auto",
+      validator: validateAutoBoolean,
     },
     cancelButtonText: {
       type: String,
@@ -73,48 +95,54 @@ export const CommonDialog = defineComponent({
       return this.dialogInfo
         ? "mdi-information"
         : this.dialogWarning
-          ? "mdi-alert"
-          : this.dialogError
-            ? "mdi-information"
-            : "mdi-blank";
+        ? "mdi-alert"
+        : this.dialogError
+        ? "mdi-information"
+        : "mdi-blank";
     },
     iconColor(): string {
       return this.dialogInfo
         ? "primary"
         : this.dialogWarning
-          ? "orange-darken-2"
-          : this.dialogError
-            ? "red"
-            : "default";
+        ? "orange-darken-2"
+        : this.dialogError
+        ? "red"
+        : "default";
     },
     dialogInfo(): boolean {
       if (this.info && (this.error || this.warning)) {
-        console.warn('[info]属性设定无效')
+        console.warn("[info]属性设定无效");
       }
-      return !this.error && !this.warning && this.info
+      return !this.error && !this.warning && this.info;
     },
     dialogWarning(): boolean {
       if (this.warning && this.error) {
-        console.warn('[warning]属性设定无效')
+        console.warn("[warning]属性设定无效");
       }
-      return !this.error && this.warning
+      return !this.error && this.warning;
     },
     dialogError(): boolean {
-      return this.error
+      return this.error;
     },
     dialogCancelable(): boolean {
-      return this.cancelable == 'auto' ? !this.dialogInfo : this.cancelable as boolean
+      return this.cancelable == "auto"
+        ? !this.dialogInfo
+        : (this.cancelable as boolean);
     },
     dialogClosable(): boolean {
-      return this.closable == 'auto' ? this.dialogInfo && !this.dialogCancelable : this.closable as boolean
+      return this.closable == "auto"
+        ? this.dialogInfo && !this.dialogCancelable
+        : (this.closable as boolean);
     },
     dialogPersistent(): boolean {
-      return this.persistent == 'auto' ? !this.dialogInfo || this.dialogCancelable : this.persistent as boolean
-    }
+      return this.persistent == "auto"
+        ? !this.dialogInfo || this.dialogCancelable
+        : (this.persistent as boolean);
+    },
   },
   emits: {
-    "closed": () => true,
-    "unmounted": () => true,
+    closed: () => true,
+    unmounted: () => true,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     "update:modelValue": (val: boolean) => true,
     confirm: () => true,
@@ -132,15 +160,15 @@ export const CommonDialog = defineComponent({
       this.$emit("update:modelValue", this.visible);
     },
     onDialogClosed() {
-      console.log('onDialogClosed')
-      this.$emit('closed')
-    }
+      console.log("onDialogClosed");
+      this.$emit("closed");
+    },
   },
-  setup(props/* , ctx */) {
-    const visible = ref(props.modelValue)
+  setup(props /* , ctx */) {
+    const visible = ref(props.modelValue);
     return {
-      visible
-    }
+      visible,
+    };
   },
   render() {
     return (
@@ -156,25 +184,34 @@ export const CommonDialog = defineComponent({
         <VCard>
           <VToolbar color="white" density="compact" class={["pl-4", "d-flex"]}>
             <VIcon icon={this.icon} color={this.iconColor} start></VIcon>
-            <VToolbarTitle>{this.$props.title}</VToolbarTitle>
-            {this.dialogClosable && (<VHover>
-              {{
-                default: ({ isHovering, props }) => (
-                  <VBtn
-                    class={["v-btn--closable"]}
-                    {...props}
-                    ripple={false}
-                    density="compact"
-                    icon="mdi-close"
-                    color={isHovering ? "red" : ""}
-                    // @ts-ignore
-                    onClick={this.onCancel}
-                  ></VBtn>
-                ),
-              }}
-            </VHover>)}
+            <VToolbarTitle class={["ml-0"]}>{this.$props.title}</VToolbarTitle>
+            {this.dialogClosable && (
+              <VHover>
+                {{
+                  default: ({ isHovering, props }) => (
+                    <VBtn
+                      class={["v-btn--closable"]}
+                      {...props}
+                      ripple={false}
+                      density="compact"
+                      icon="mdi-close"
+                      color={isHovering ? "red" : ""}
+                      // @ts-ignore
+                      onClick={this.onCancel}
+                    ></VBtn>
+                  ),
+                }}
+              </VHover>
+            )}
           </VToolbar>
-          <VCardText>{this.$props.text}</VCardText>
+          <VCardText>
+            {{
+              default:
+                this.$props.text instanceof String || typeof this.$props.text === "string"
+                  ? () => this.$props.text as string
+                  : (this.$props.text as () => VNodeChild),
+            }}
+          </VCardText>
           <VCardActions class={["justify-end"]}>
             {this.dialogCancelable && (
               <VBtn

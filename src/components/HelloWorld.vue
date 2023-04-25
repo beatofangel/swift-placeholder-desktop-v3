@@ -20,19 +20,21 @@
       @confirm="handleConfirm"
       @cancel="handleCancel"
     ></CommonDialog> -->
-    <v-btn @click="showDialog({info: true, cancelable: true, closable: false, persistent: false})">info</v-btn>
-    <v-btn @click="showDialog({warning: true})">warning</v-btn>
-    <v-btn @click="showDialog({error: true})">error</v-btn>
+    <v-btn @click="showDialog({op: EditModeDelete, text: () => h(VBtn, { prop: { variant: 'text' }}, ()=>'ok') })">delete</v-btn>
+    <v-btn @click="showDialog({op: EditModeCreate, text: () => 'no'})">create</v-btn>
+    <v-btn @click="showDialog({op: EditModeUpdate})">update</v-btn>
+    <v-btn @click="showDialog({op: EditModeRead})">read</v-btn>
   </v-container>
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue';
 import { VCascadeSelect } from './VCascadeSelect';
-import { getCurrentInstance } from 'vue';
 import { watch } from 'vue';
-// @ts-ignore
-const { proxy } = getCurrentInstance()
+import { EditModeCreate, EditModeDelete, EditModeRead, EditModeUpdate, useCurrentInstance } from '@/composables';
+import { h } from 'vue';
+import { VBtn } from 'vuetify/lib/components/VBtn/index';
+const { proxy } = useCurrentInstance()
 // import { CommonDialog } from './common/commonDialog';
 // class CascadeSelectionItem {
 //   name: String
@@ -57,9 +59,7 @@ watch(dialog, (val) => {
 })
 // TODO 对话框无法关闭
 function showDialog(data: any) {
-  proxy.$dialog({
-    title: '测试标题 - 对话框',
-    text: '测试内容',
+  proxy.$dialog.confirm({
     ...data,
     'onUpdate:modelValue': (val: boolean) => {console.log('onUpdate:modelValue', val)},
     'onClosed': () => { console.log('this is my onClosed event handler.') },
