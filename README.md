@@ -1,5 +1,16 @@
 # base
 
+## Prerequisites
+
+```
+# python3
+https://www.python.org/
+
+# visual studio
+https://visualstudio.microsoft.com/
+
+```
+
 ## Project setup
 
 ```
