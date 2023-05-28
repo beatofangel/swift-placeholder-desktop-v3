@@ -1,16 +1,17 @@
+import { Setting } from '@/types'
 import Store from 'electron-store'
 
 const store = new Store()
 
 /* store.has("settings") ||  */// store.set("settings", {})
 
-class Setting {
-  declare id: string
-  declare name: string
-  declare type: string
-  declare value: any
-  declare description: string
-}
+// class Setting {
+//   declare id: string
+//   declare name: string
+//   declare type: string
+//   declare value: any
+//   declare description: string
+// }
 
 function saveSetting(setting: Setting) {
   store.set(`settings.${setting.id}.name`, setting.name)
@@ -44,7 +45,7 @@ function initSettings(settings: Setting[]) {
 // }
 
 function getSetting(key: string) {
-  return store.get(key)
+  return store.get(key, null) as Record<string, Setting>
 }
 
 function onDidChange(key: string, callback: Function) {

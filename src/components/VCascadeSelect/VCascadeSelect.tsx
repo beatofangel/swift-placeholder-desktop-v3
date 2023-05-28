@@ -7,7 +7,7 @@ import { forwardRefs } from 'vuetify/lib/composables/forwardRefs.mjs'
 // @ts-ignore
 import { IconValue } from 'vuetify/lib/composables/icons.mjs'
 // @ts-ignore
-import { makeItemsProps, useItems } from 'vuetify/lib/composables/items.mjs'
+import { makeItemsProps, useItems } from 'vuetify/lib/composables/list-items.mjs'
 // @ts-ignore
 import { makeTransitionProps } from 'vuetify/lib/composables/transition.mjs'
 // @ts-ignore
@@ -34,16 +34,16 @@ import { Intersect } from 'vuetify/lib/directives/intersect/index.mjs'
 
 // @ts-ignore
 import { makeVTextFieldProps } from 'vuetify/lib/components/VTextField/VTextField.mjs'
-import { VDialogTransition } from 'vuetify/lib/components/transitions/index'
-import { VList, VListItem } from 'vuetify/lib/components/VList/index'
-import { VChip } from 'vuetify/lib/components/VChip/index'
-import { VMenu } from 'vuetify/lib/components/VMenu/index'
-import { VTextField } from 'vuetify/lib/components/VTextField/index'
-import { VDefaultsProvider } from 'vuetify/lib/components/VDefaultsProvider/index'
-import { VCard, VCardText } from 'vuetify/lib/components/VCard/index'
-import { VRow, VCol } from 'vuetify/lib/components/VGrid/index'
-import { VBtn } from 'vuetify/lib/components/VBtn/index'
-import { VIcon } from 'vuetify/lib/components/VIcon/index'
+import { VDialogTransition } from 'vuetify/lib/components/transitions/index.mjs'
+import { VList, VListItem } from 'vuetify/lib/components/VList/index.mjs'
+import { VChip } from 'vuetify/lib/components/VChip/index.mjs'
+import { VMenu } from 'vuetify/lib/components/VMenu/index.mjs'
+import { VTextField } from 'vuetify/lib/components/VTextField/index.mjs'
+import { VDefaultsProvider } from 'vuetify/lib/components/VDefaultsProvider/index.mjs'
+import { VCard, VCardText } from 'vuetify/lib/components/VCard/index.mjs'
+import { VRow, VCol } from 'vuetify/lib/components/VGrid/index.mjs'
+import { VBtn } from 'vuetify/lib/components/VBtn/index.mjs'
+import { VIcon } from 'vuetify/lib/components/VIcon/index.mjs'
 // import VCascadeSelectList from "./VCascadeSelectList"; // Extensions
 
 // @ts-ignore
@@ -104,7 +104,7 @@ export const makeSelectProps = propsFactory({
   },
   colors: {
     type: Array<String>,
-    default: ["primary", "light-green", "orange", "pink", "cyan", "blue-grey"],
+    default: ["amber", "light-green", "orange", "pink", "cyan", "blue-grey"],
   },
   scrollOffset: {
     type: [ Number, String ],
@@ -696,7 +696,7 @@ export const VCascadeSelect = genericComponent<new <
           ref={ vTextFieldRef }
           { ...textFieldProps }
           modelValue={ model.value.map((v: { props: { value: any } }) => v.props.value).join(', ') }
-          onUpdate:modelValue={ v => { if (v == null) model.value = [] } }
+          onUpdate:modelValue={ (v: null) => { if (v == null) model.value = [] } }
           v-model:focused = { isFocused.value }
           validationValue={ model.externalValue }
           dirty={ isDirty }

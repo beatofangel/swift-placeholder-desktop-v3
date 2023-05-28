@@ -21,14 +21,32 @@ export interface CommonListItem {
   sort: boolean,
 }
 
+export interface Link {
+  name: string,
+  path: string,
+  icon: string,
+}
+
+export interface Setting {
+  id: string,
+  name: string,
+  description: string,
+  type: string,
+  value: string | number | boolean
+}
+
 declare global {
   interface Window {
     replaceService: {
       findBusinessCategoryCascaded: () => Promise<any>,
       findTemplateByBcId: ({ bcId }: { bcId: string }) => Promise<any>
     },
-    store: {
-      saveSession: (session: Session) => Promise<any>
+    session: {
+      saveSession: (session: Session) => Promise<any>,
+    },
+    settings: {
+      getSetting: (name: string) => Record<string, Setting>,
+      saveSetting: (setting: Setting) => Promise<any>
     },
     commonService: {
       find: (modelName: string, condition: object) => Promise<any>,
@@ -36,6 +54,14 @@ declare global {
     },
     appService: {
       appName: () => Promise<any>,
+      // appVersion: () => Promise<string>,
+      // directoryPicker: (title: string, directory: string) => Promise<string>,
+      // maximize: () => Promise<boolean>,
+      // minimize: () => Promise<any>,
+      // close: () => Promise<any>,
+    },
+    ipc: {
+      invoke: (api: string, params?: any) => Promise<any>
     }
   }
 }

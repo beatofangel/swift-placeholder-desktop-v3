@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import path from 'path'
 import log from 'electron-log'
 import { sequelize } from './database/sequelize'
@@ -14,6 +14,8 @@ function createWindow () {
   const mainWindow = new BrowserWindow({
     width: 1600,
     height: 900,
+    frame: false,
+    transparent: true,
     webPreferences: {
       preload: path.join(__dirname, '../dist-electron/preload.js'),
       nodeIntegration: true,
@@ -71,4 +73,40 @@ app.whenReady().then(async () => {
 // 任务栏上的图标来说，应当保持活跃状态，直到用户使用 Cmd + Q 退出。
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit()
+})
+
+// TODO 暂不支持多窗口
+ipcMain.handle('minimize', async () => {
+  const win = BrowserWindow.getFocusedWindow() as Electron.BrowserWindow
+  win.minimize()
+})
+
+ipcMain.handle('maximize', async () => {
+  const win = BrowserWindow.getFocusedWindow() as Electron.BrowserWindow
+  const maximized = win.isMaximized()
+  maximized ? win.unmaximize() : win.maximize()
+  return !maximized
+})
+
+ipcMain.handle('close', async event => {
+  const win = BrowserWindow.getFocusedWindow() as Electron.BrowserWindow
+  event.sender.isDevToolsOpened() && event.sender.closeDevTools()
+  win.close()
+  // win.destroy()
+})
+
+ipcMain.handle('directoryPicker', async (event, data) => {
+  const result = await dialog.showOpenDialog(BrowserWindow.getFocusedWindow() as Electron.BrowserWindow, {
+    title: `选择${data.title}`,
+    defaultPath: data.directory || app.getPath("documents"),
+    properties: [
+      'openDirectory'
+    ]
+  })
+
+  return result.canceled ? '' : result.filePaths[0]
+})
+
+ipcMain.handle('getAppVersion', async (event) => {
+  return app.getVersion()
 })

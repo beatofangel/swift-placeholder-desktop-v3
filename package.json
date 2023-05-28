@@ -1,6 +1,6 @@
 {
   "name": "swift-placeholder-desktop-v3",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "dist-electron/background.js",
   "private": true,
   "description": "swift placeholder",
@@ -28,7 +28,7 @@
     "vue-router": "^4.0.0",
     "vue-toastification": "^2.0.0-rc.5",
     "vue3-draggable-next": "^4.1.4",
-    "vuetify": "^3.1.15",
+    "vuetify": "^3.3.0",
     "webfontloader": "^1.0.0"
   },
   "devDependencies": {

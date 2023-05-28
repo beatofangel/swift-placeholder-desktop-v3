@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import session from './store/session'
-import setting from './store/setting'
+import settings from './store/settings'
 import * as appService from './service/appService'
 import * as commonService from './service/commonService'
 import * as replaceService from './service/replaceService'
@@ -66,6 +66,6 @@ contextBridge.exposeInMainWorld('replaceService', { ...replaceService })
 // contextBridge.exposeInMainWorld('settingService', { ...require('./service/settingService') })
 contextBridge.exposeInMainWorld('commonService', { ...commonService })
 contextBridge.exposeInMainWorld('appService', { ...appService })
-contextBridge.exposeInMainWorld('setting', { ...setting })
+contextBridge.exposeInMainWorld('settings', { ...settings })
 contextBridge.exposeInMainWorld('session', { ...session })
 // contextBridge.exposeInMainWorld('log', log)

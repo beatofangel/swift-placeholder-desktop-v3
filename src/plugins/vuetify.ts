@@ -23,8 +23,9 @@ export default createVuetify({
       light: {
         dark: false,
         colors: {
-          primary: '#1867C0',
-          secondary: '#5CBBF6',
+          primary: '#F37984',
+          secondary: '#F3BDB0',
+          'secondary-lighten-1': '#FFF0ED',
         },
         variables: {
           scrollbarTrack: colors.grey.lighten4,
@@ -34,6 +35,10 @@ export default createVuetify({
       },
       dark: {
         dark: true,
+        colors: {
+          primary: '1B262C',
+          secondary: '0F4C75',
+        },
         variables: {
           scrollbarTrack: colors.grey.darken1,
           scrollbarThumb: colors.grey.lighten1,
